@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  /* Branding Colors from your Logo */
+  --color-vibe-black: #050505;
+  --color-vibe-purple: #8b2cf5;
+  --color-vibe-red: #ff1f44;
+  --color-vibe-pink: #f536a4;
+
+  --color-background: var(--color-vibe-black);
+  --color-foreground: #ffffff;
+}
+
+@layer base {
+  body {
+    @apply bg-vibe-black text-white;
+    position: relative;
+    min-height: 100vh;
+    /* Edge glows based on logo colors */
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(255, 31, 68, 0.12) 0%, transparent 45%),
+      radial-gradient(circle at 100% 100%, rgba(139, 44, 245, 0.12) 0%, transparent 45%);
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    /* Next.js public files are referenced from root '/' */
+    background-image: url('/logo.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 80% auto;
+    opacity: 0.15;
+    filter: blur(2px);
+    mix-blend-mode: screen; 
+    z-index: -1;
+    pointer-events: none;
+  }
+}
+
+@layer utilities {
+  .text-spotlight {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-vibe-red via-vibe-pink to-vibe-purple;
+  }
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-2xl;
+  }
+}
