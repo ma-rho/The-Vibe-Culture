@@ -21,13 +21,6 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
-        // This is the correct path that matches the error message you provided.
-        pathname: '/v0/b/the-vibe-culture.appspot.com/o/**',
-      },
-      // It seems you may have another bucket name format, let's add it too.
-       {
-        protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
         pathname: '/v0/b/the-vibe-culture.firebasestorage.app/**',
       },
     ],
