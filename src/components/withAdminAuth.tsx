@@ -1,25 +1,46 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
-import { useEffect, ComponentType, ReactElement } from 'react';
+import { useEffect, useState, ComponentType } from 'react';
+import { onAuthStateChanged, User } from 'firebase/auth'; 
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-// Use ComponentType to represent a React component
+/**
+ * Higher-Order Component to protect admin routes.
+ * Replaces NextAuth useSession logic with Firebase onAuthStateChanged.
+ */
 export default function withAdminAuth<P extends object>(
   Component: ComponentType<P>
 ) {
-  return function WithAdminAuth(props: P): ReactElement | null {
-    const { data: session, status } = useSession();
+  return function ProtectedRoute(props: P) {
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
-      if (status === 'loading') return;
-      if (!session) redirect('/admin/login');
-    }, [session, status]);
+      // Observer for Firebase auth state
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (!currentUser) {
+          router.push('/admin/login');
+        } else {
+          setUser(currentUser);
+        }
+        setLoading(false);
+      });
 
-    if (status === 'loading' || !session) {
-      return null; // Or a loading spinner
+      return () => unsubscribe();
+    }, [router]);
+
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-black">
+          <Loader2 className="animate-spin text-purple-500" size={48} />
+        </div>
+      );
     }
 
-    return <Component {...props} />;
+    // Only render the component if a user is authenticated
+    return user ? <Component {...props} /> : null;
   };
 }

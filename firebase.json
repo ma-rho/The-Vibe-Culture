@@ -1,0 +1,19 @@
+{
+  "hosting": {
+    "source": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "frameworksBackend": {
+      "region": "us-central1",
+      "secret": [
+        "ADMIN_PASSWORD",
+        "NEXTAUTH_SECRET",
+        "SERVICE_ACCOUNT_KEY",
+        "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"
+      ]
+    }
+  }
+}

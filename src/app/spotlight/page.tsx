@@ -1,7 +1,9 @@
 import { getFeatured } from '@/app/actions/admin';
 import MemberCard from '@/components/MemberCard';
+import { ExternalLink } from 'lucide-react';
 
 export default async function SpotlightPage() {
+  // Fetch featured creatives from the database
   const creatives = await getFeatured();
 
   return (
@@ -24,12 +26,18 @@ export default async function SpotlightPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 pt-10">
             {creatives.map((creative) => (
               <div key={creative.id} className="group space-y-6">
+                {/* Pass the creativeLink prop to MemberCard. 
+                  creative.role is mapped to the 'talent' prop in MemberCard.
+                */}
                 <MemberCard 
                   name={creative.name}
                   talent={creative.role}
                   imageUrl={creative.imageUrl}
+                  creativeLink={creative.creativeLink} 
                 />
-                <div className="px-2">
+                
+                <div className="px-2 space-y-4">
+                  {/* Display the artist's personal caption/bio */}
                   <p className="text-white/60 text-sm leading-relaxed italic border-l-2 border-vibe-pink pl-4">
                     &quot;{creative.caption}&quot;
                   </p>

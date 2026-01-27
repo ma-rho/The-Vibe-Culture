@@ -1,23 +1,20 @@
+// src/lib/firebaseAdmin.ts
+import * as admin from 'firebase-admin';
 
-import admin from 'firebase-admin';
-
-// Check if the app is already initialized to prevent errors
 if (!admin.apps.length) {
-  try {
-    const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
-    );
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    });
-  } catch (error) {
-    console.error('Firebase Admin initialization error:', error);
-  }
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+    databaseURL: process.env.FIREBASE_DATABASE_URL,
+  });
 }
 
-// Export the initialized auth and firestore services
-export const firebaseAdminAuth = admin.auth();
+// Export specific services for use in Server Actions
 export const firebaseAdminDb = admin.firestore();
+export const firebaseAdminAuth = admin.auth();
 export const firebaseAdminStorage = admin.storage();
+
+export default admin;

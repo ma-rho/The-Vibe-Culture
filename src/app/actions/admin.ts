@@ -27,6 +27,7 @@ export interface FeaturedCreative {
   role: string;
   imageUrl: string;
   caption: string;
+  creativeLink?: string;
 }
 
 // export async function addFeatured(data: Omit<FeaturedCreative, 'id'>) {
@@ -42,12 +43,14 @@ export async function getFeatured(): Promise<FeaturedCreative[]> {
       
     return snapshot.docs.map(doc => {
       const data = doc.data();
+      // FIX: Add creativeLink to the returned object so the UI can read it
       return {
         id: doc.id,
         name: data.name,
         role: data.role,
         imageUrl: data.imageUrl,
-        caption: data.caption
+        caption: data.caption,
+        creativeLink: data.creativeLink // Added this line
       } as FeaturedCreative;
     });
   } catch (error) {
@@ -61,6 +64,7 @@ export async function uploadFeaturedCreative(formData: FormData) {
     const name = formData.get('name') as string;
     const role = formData.get('role') as string;
     const caption = formData.get('caption') as string;
+    const creativeLink = formData.get('creativeLink') as string; // New Field
     const file = formData.get('image') as File;
 
     if (!file || file.size === 0) throw new Error("File is empty or missing");
@@ -68,7 +72,6 @@ export async function uploadFeaturedCreative(formData: FormData) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const bucket = firebaseAdminStorage.bucket();
     
-    // Clean filename: remove special characters
     const safeName = file.name.replace(/[^a-z0-9.]/gi, '_').toLowerCase();
     const filename = `featured/${Date.now()}-${safeName}`;
     const fileRef = bucket.file(filename);
@@ -77,24 +80,24 @@ export async function uploadFeaturedCreative(formData: FormData) {
       metadata: { contentType: file.type }
     });
 
-    // Safer URL construction using the bucket variable
     const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filename)}?alt=media`;
 
+    // Save to Firestore with the new creativeLink field
     await firebaseAdminDb.collection('featured').add({
       name,
       role,
       imageUrl,
       caption,
+      creativeLink, // Store the link here
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
     revalidatePath('/spotlight');
     revalidatePath('/admin/dashboard');
     return { success: true };
-  } catch (err: any) {
-    // Log the specific Firebase error to your TERMINAL
+  } catch (err: unknown) {
     console.error("FULL_ERROR_DETAILS:", err);
-    throw new Error(err.message || "Upload failed");
+    throw new Error(err instanceof Error ? err.message : "Upload failed");
   }
 }
 

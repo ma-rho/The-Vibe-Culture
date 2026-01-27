@@ -4,19 +4,22 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   getSubmissions, 
   getEvents, 
+  getFeatured, // Ensure this is exported from your actions
   createEvent, 
   deleteItem, 
   uploadFeaturedCreative,
   SubmissionData, 
-  EventData 
+  EventData,
+  FeaturedCreative // Interface for creatives
 } from '@/app/actions/admin';
 import withAdminAuth from '@/components/withAdminAuth';
-import { Trash2, Plus, Users, Star, Calendar, Upload, X, Loader2, Link as LinkIcon } from 'lucide-react';
+import { Trash2, Plus, Users, Star, Calendar, Upload, X, Loader2, Link as LinkIcon, Edit2 } from 'lucide-react';
 import Image from 'next/image';
 
 function AdminDashboard() {
   const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
   const [events, setEvents] = useState<EventData[]>([]);
+  const [featured, setFeatured] = useState<FeaturedCreative[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   
@@ -26,11 +29,16 @@ function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      const [subs, evs] = await Promise.all([getSubmissions(), getEvents()]);
+      const [subs, evs, feat] = await Promise.all([
+        getSubmissions(), 
+        getEvents(),
+        getFeatured()
+      ]);
       setSubmissions(subs);
       setEvents(evs);
+      setFeatured(feat);
     } catch (error) {
-      console.error("Fetch error");
+      console.error("Fetch error :" + error);
     } finally {
       setLoading(false);
     }
@@ -67,79 +75,111 @@ function AdminDashboard() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         
-        {/* SECTION 1: FEATURED CREATIVES UPLOAD */}
-        <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl">
-          <div className="flex items-center gap-3 mb-6">
-            <Star className="text-vibe-pink" />
-            <h2 className="text-xl font-black uppercase tracking-widest italic">Spotlight Editor</h2>
+        {/* SECTION 1: SPOTLIGHT EDITOR & ACTIVE CREATIVES */}
+        <div className="space-y-8">
+          <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Star className="text-vibe-pink" />
+              <h2 className="text-xl font-black uppercase tracking-widest italic">Spotlight Editor</h2>
+            </div>
+
+            <form action={async (formData) => {
+              setUploading(true);
+              try {
+                await uploadFeaturedCreative(formData);
+                clearPreview();
+                loadData(); // Refresh list after upload
+                alert("Creative Published!");
+              } catch (err) {
+                alert("Upload failed." + err);
+              } finally {
+                setUploading(false);
+              }
+            }} className="space-y-4">
+              
+              <div className="relative group">
+                <input 
+                  type="file" 
+                  name="image" 
+                  accept="image/*" 
+                  className="hidden" 
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  required 
+                />
+                {!previewUrl ? (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-vibe-pink/50 hover:bg-white/5 transition-all"
+                  >
+                    <Upload className="text-vibe-pink mb-2" />
+                    <p className="text-[10px] uppercase font-bold text-white/40">Select Member Photo</p>
+                  </div>
+                ) : (
+                  <div className="relative rounded-2xl overflow-hidden aspect-square border border-white/20">
+                    <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+                    <button 
+                      type="button"
+                      onClick={clearPreview}
+                      className="absolute top-2 right-2 bg-black/60 p-2 rounded-full hover:bg-vibe-red transition-all"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <input name="name" placeholder="Stage Name" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
+                <input name="role" placeholder="Talent (e.g. Visual Artist)" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
+                <input 
+                  name="creativeLink" 
+                  type="url" 
+                  placeholder="Creative's Pick Link" 
+                  className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" 
+                />
+                <textarea name="caption" placeholder="Short spotlight bio..." className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm h-20 resize-none" required />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={uploading}
+                className="w-full bg-vibe-pink hover:bg-vibe-purple disabled:opacity-50 p-4 rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all"
+              >
+                {uploading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />} 
+                {uploading ? 'Uploading...' : 'Publish Spotlight'}
+              </button>
+            </form>
           </div>
 
-          <form action={async (formData) => {
-            setUploading(true);
-            try {
-              await uploadFeaturedCreative(formData);
-              clearPreview();
-              alert("Creative Published!");
-            } catch (err) {
-              alert("Upload failed.");
-            } finally {
-              setUploading(false);
-            }
-          }} className="space-y-4">
-            
-            {/* Custom File Picker UI */}
-            <div className="relative group">
-              <input 
-                type="file" 
-                name="image" 
-                accept="image/*" 
-                className="hidden" 
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                required 
-              />
-              {!previewUrl ? (
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-white/10 rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer hover:border-vibe-pink/50 hover:bg-white/5 transition-all"
-                >
-                  <Upload className="text-vibe-pink mb-2" />
-                  <p className="text-[10px] uppercase font-bold text-white/40">Select Member Photo</p>
-                </div>
-              ) : (
-                <div className="relative rounded-2xl overflow-hidden aspect-square border border-white/20">
-                  <Image src={previewUrl} alt="Preview" fill className="object-cover" />
+          {/* ACTIVE SPOTLIGHT LIST */}
+          <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
+            <h3 className="text-xs font-black uppercase tracking-widest text-white/40 mb-4 italic">Live in Spotlight</h3>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {featured.map((creative) => (
+                <div key={creative.id} className="flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5">
+                  <div className="relative h-12 w-12 rounded-full overflow-hidden border border-vibe-pink/30 flex-shrink-0">
+                    <Image src={creative.imageUrl} alt={creative.name} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm truncate">{creative.name}</p>
+                    <p className="text-[10px] text-white/40 uppercase">{creative.role}</p>
+                  </div>
                   <button 
-                    type="button"
-                    onClick={clearPreview}
-                    className="absolute top-2 right-2 bg-black/60 p-2 rounded-full hover:bg-vibe-red transition-all"
+                    onClick={() => { if(confirm("Remove from spotlight?")) deleteItem('featured', creative.id).then(loadData) }} 
+                    className="p-2 text-white/20 hover:text-vibe-red transition-all"
                   >
-                    <X size={16} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
-              )}
+              ))}
             </div>
-
-            <div className="space-y-2">
-              <input name="name" placeholder="Stage Name" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
-              <input name="role" placeholder="Talent (e.g. Visual Artist)" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
-              <textarea name="caption" placeholder="Short spotlight bio..." className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm h-20 resize-none" required />
-            </div>
-
-            <button 
-              type="submit" 
-              disabled={uploading}
-              className="w-full bg-vibe-pink hover:bg-vibe-purple disabled:opacity-50 p-4 rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all"
-            >
-              {uploading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />} 
-              {uploading ? 'Uploading...' : 'Publish Spotlight'}
-            </button>
-          </form>
+          </div>
         </div>
 
         {/* SECTION 2: EVENT MANAGEMENT */}
         <div className="lg:col-span-2 space-y-8">
-          
+          {/* ... [Your existing Event Management Code] ... */}
           <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
             <div className="flex items-center gap-3 mb-6">
               <Calendar className="text-vibe-red" />
@@ -185,6 +225,7 @@ function AdminDashboard() {
           </div>
 
           {/* SECTION 3: RECENT SUBMISSIONS */}
+          {/* ... [Your existing Submissions Code] ... */}
           <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
             <div className="flex items-center gap-3 mb-6">
               <Users className="text-vibe-purple" />

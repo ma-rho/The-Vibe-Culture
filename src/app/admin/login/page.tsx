@@ -1,62 +1,80 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useState, FormEvent } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth'; 
+import { auth } from '@/lib/firebase'; 
 import { useRouter } from 'next/navigation';
+import { Lock, Loader2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const res = await signIn('credentials', {
-        redirect: false, // We handle the redirect ourselves
-        password,
-      });
-
-      if (res?.error) {
-        setError('INVALID ACCESS KEY');
+      // Direct Firebase Authentication
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/admin/dashboard');
+    } catch (err: unknown) {
+      // Safely handle the 'unknown' error type
+      if (err instanceof Error) {
+        setError(err.message);
       } else {
-        // Successful login - go to dashboard
-        router.push('/admin/dashboard');
-        router.refresh();
+        setError('Invalid admin credentials');
       }
-    } catch (err) {
-      setError('CONNECTION ERROR: Check your Cloud Workstation URL in .env');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-6">
-      <div className="bg-vibe-black/60 backdrop-blur-2xl p-10 rounded-[2rem] border border-white/10 w-full max-w-md">
-        <h1 className="text-4xl font-black mb-8 text-center text-spotlight italic tracking-tighter">
-          ADMIN ACCESS
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full p-4 bg-black/40 rounded-xl border border-white/10 text-white outline-none focus:border-vibe-purple transition-all"
-            required
-          />
-          {error && <p className="text-vibe-red text-xs font-bold text-center italic">{error}</p>}
+    <div className="min-h-screen bg-black flex items-center justify-center text-white">
+      <div className="bg-gray-900/50 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-purple-500/20 w-full max-w-md">
+        <div className="flex flex-col items-center mb-6">
+          <Lock className="text-purple-400 mb-2" size={32} />
+          <h1 className="text-3xl font-bold text-center text-purple-400 italic uppercase tracking-tighter">
+            Admin Portal
+          </h1>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Admin Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="admin@vibeculture.live"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-800 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              required
+            />
+          </div>
+          
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+          
           <button 
-            type="submit" 
+            type="submit"
             disabled={loading}
-            className="w-full bg-vibe-purple hover:bg-vibe-red text-white font-black py-4 rounded-full transition-all uppercase italic"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2"
           >
-            {loading ? 'Verifying...' : 'Enter Dashboard'}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : 'SIGN IN'}
           </button>
         </form>
       </div>
