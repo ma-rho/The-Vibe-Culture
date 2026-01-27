@@ -1,4 +1,5 @@
 // src/app/events/page.tsx
+export const dynamic = 'force-dynamic';
 import { getEvents } from '@/app/actions/admin';
 import EventCard from '@/components/EventCard';
 

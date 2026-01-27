@@ -103,6 +103,12 @@ export async function uploadFeaturedCreative(formData: FormData) {
 
 // 1. Fetch Events
 export async function getEvents(): Promise<EventData[]> {
+  // Check if firebaseAdminDb was successfully initialized
+  if (!firebaseAdminDb) {
+    console.error("Firebase Admin DB not initialized. Check environment variables.");
+    return []; // Return empty array instead of throwing a build-breaking error
+  }
+
   try {
     const snapshot = await firebaseAdminDb.collection('events')
       .orderBy('date', 'asc')
@@ -110,17 +116,16 @@ export async function getEvents(): Promise<EventData[]> {
       
     return snapshot.docs.map(doc => {
       const data = doc.data();
-      // ✅ DO NOT use ...data(). Manually pick the fields to avoid sending Timestamps.
       return {
         id: doc.id,
         title: data.title || 'Untitled Event',
-        date: data.date || '', // Assuming this is stored as a string from your input
+        date: data.date || '',
         link: data.link || '',
       } as EventData;
     });
   } catch (error) {
     console.error("Error in getEvents:", error);
-    throw new Error("Failed to fetch events from server");
+    return []; 
   }
 }
 
