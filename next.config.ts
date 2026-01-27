@@ -28,10 +28,11 @@ const nextConfig: NextConfig = {
        {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
-        pathname: '/v0/b/the-vibe-culture.firebasestorage.app/o/**',
+        pathname: '/v0/b/the-vibe-culture.firebasestorage.app/**',
       },
     ],
   },
+  serverExternalPackages: ['firebase-admin'],
   reactCompiler: true,
 };
 

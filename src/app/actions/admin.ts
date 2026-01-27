@@ -1,5 +1,5 @@
 'use server'
-import * as admin from 'firebase-admin'; // Ensure this is here
+import admin from 'firebase-admin';
 import { firebaseAdminDb, firebaseAdminStorage } from '@/lib/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
 //import admin from '../../../lib/firebaseAdmin';
@@ -36,6 +36,11 @@ export interface FeaturedCreative {
 // }
 
 export async function getFeatured(): Promise<FeaturedCreative[]> {
+  // GUARD HERE
+  if (!firebaseAdminDb) {
+    console.error("Firebase Admin DB not initialized for getFeatured.");
+    return [];
+  }
   try {
     const snapshot = await firebaseAdminDb.collection('featured')
       .orderBy('createdAt', 'desc') // Newest first
@@ -131,6 +136,11 @@ export async function getEvents(): Promise<EventData[]> {
 
 // Fetch Submissions
 export async function getSubmissions(): Promise<SubmissionData[]> {
+  // GUARD HERE
+  if (!firebaseAdminDb) {
+    console.error("Firebase Admin DB not initialized for getFeatured.");
+    return [];
+  }
   const snapshot = await firebaseAdminDb.collection('submissions')
     .orderBy('submittedAt', 'desc')
     .limit(10)

@@ -1,4 +1,4 @@
-import * as admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 // 1. Logic to get the service account from the single JSON string
 const getServiceAccount = () => {
