@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: '4mb', 
+      bodySizeLimit: '4mb',
     },
   },
   images: {
@@ -14,14 +14,19 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },
-      { 
-        protocol: 'https', 
-        hostname: 'api.microlink.io' 
+      {
+        protocol: 'https',
+        hostname: 'api.microlink.io'
       },
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
-        pathname: '/v0/b/the-vibe-culture.firebasestorage.app/**',
+        pathname: '/v0/b/the-vibe-culture.appspot.com/o/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        pathname: '/v0/b/the-vibe-culture.firebasestorage.app/o/**',
       },
     ],
   },

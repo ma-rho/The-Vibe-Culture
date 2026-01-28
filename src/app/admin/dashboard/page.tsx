@@ -1,19 +1,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+// We keep mutations (create/delete/upload) as actions, 
+// but we REMOVE getSubmissions, getEvents, and getFeatured.
 import { 
-  getSubmissions, 
-  getEvents, 
-  getFeatured, // Ensure this is exported from your actions
   createEvent, 
   deleteItem, 
   uploadFeaturedCreative,
   SubmissionData, 
   EventData,
-  FeaturedCreative // Interface for creatives
+  FeaturedCreative 
 } from '@/app/actions/admin';
 import withAdminAuth from '@/components/withAdminAuth';
-import { Trash2, Plus, Users, Star, Calendar, Upload, X, Loader2, Link as LinkIcon, Edit2 } from 'lucide-react';
+import { Trash2, Plus, Users, Star, Calendar, Upload, X, Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
 
 function AdminDashboard() {
@@ -23,28 +22,45 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   
-  // Image Preview State
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // NEW: Fetch data from API routes instead of direct server actions
   const loadData = async () => {
     try {
-      const [subs, evs, feat] = await Promise.all([
-        getSubmissions(), 
-        getEvents(),
-        getFeatured()
+      setLoading(true);
+      // It is important to use an absolute URL or a relative path that works in your environment
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+
+      const [subsRes, evsRes, featRes] = await Promise.all([
+        fetch(`${baseUrl}/api/submissions`, { cache: 'no-store' }),
+        fetch(`${baseUrl}/api/events`, { cache: 'no-store' }),
+        fetch(`${baseUrl}/api/featured`, { cache: 'no-store' })
       ]);
+
+      if (!subsRes.ok || !evsRes.ok || !featRes.ok) {
+        throw new Error('One or more APIs failed to respond');
+      }
+
+      const [subs, evs, feat] = await Promise.all([
+        subsRes.json(),
+        evsRes.json(),
+        featRes.json()
+      ]);
+
       setSubmissions(subs);
       setEvents(evs);
       setFeatured(feat);
     } catch (error) {
-      console.error("Fetch error :" + error);
+      console.error("Dashboard data load error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,8 +90,7 @@ function AdminDashboard() {
       </header>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        
-        {/* SECTION 1: SPOTLIGHT EDITOR & ACTIVE CREATIVES */}
+        {/* COLUMN 1: SPOTLIGHT EDITOR */}
         <div className="space-y-8">
           <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl">
             <div className="flex items-center gap-3 mb-6">
@@ -88,22 +103,21 @@ function AdminDashboard() {
               try {
                 await uploadFeaturedCreative(formData);
                 clearPreview();
-                loadData(); // Refresh list after upload
+                await loadData(); // Refresh list after upload
                 alert("Creative Published!");
               } catch (err) {
-                alert("Upload failed." + err);
+                alert("Upload failed: " + err);
               } finally {
                 setUploading(false);
               }
             }} className="space-y-4">
-              
               <div className="relative group">
                 <input 
                   type="file" 
                   name="image" 
                   accept="image/*" 
                   className="hidden" 
-                  ref={fileInputRef}
+                  ref={fileInputRef} 
                   onChange={handleFileChange}
                   required 
                 />
@@ -119,7 +133,7 @@ function AdminDashboard() {
                   <div className="relative rounded-2xl overflow-hidden aspect-square border border-white/20">
                     <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                     <button 
-                      type="button"
+                      type="button" 
                       onClick={clearPreview}
                       className="absolute top-2 right-2 bg-black/60 p-2 rounded-full hover:bg-vibe-red transition-all"
                     >
@@ -128,17 +142,12 @@ function AdminDashboard() {
                   </div>
                 )}
               </div>
-
+              
               <div className="space-y-2">
                 <input name="name" placeholder="Stage Name" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
-                <input name="role" placeholder="Talent (e.g. Visual Artist)" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
-                <input 
-                  name="creativeLink" 
-                  type="url" 
-                  placeholder="Creative's Pick Link" 
-                  className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" 
-                />
-                <textarea name="caption" placeholder="Short spotlight bio..." className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm h-20 resize-none" required />
+                <input name="role" placeholder="Talent (e.g. DJ, Producer)" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
+                <input name="creativeLink" type="url" placeholder="Portfolio/Social Link" className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm" />
+                <textarea name="caption" placeholder="Short bio or caption..." className="w-full bg-white/5 border border-white/10 p-3 rounded-xl text-sm h-20 resize-none" required />
               </div>
 
               <button 
@@ -147,7 +156,7 @@ function AdminDashboard() {
                 className="w-full bg-vibe-pink hover:bg-vibe-purple disabled:opacity-50 p-4 rounded-full font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all"
               >
                 {uploading ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />} 
-                {uploading ? 'Uploading...' : 'Publish Spotlight'}
+                {uploading ? 'Publishing...' : 'Publish Spotlight'}
               </button>
             </form>
           </div>
@@ -166,7 +175,7 @@ function AdminDashboard() {
                     <p className="text-[10px] text-white/40 uppercase">{creative.role}</p>
                   </div>
                   <button 
-                    onClick={() => { if(confirm("Remove from spotlight?")) deleteItem('featured', creative.id).then(loadData) }} 
+                    onClick={() => { if(confirm("Remove from spotlight?")) deleteItem('featured', creative.id).then(loadData) }}
                     className="p-2 text-white/20 hover:text-vibe-red transition-all"
                   >
                     <Trash2 size={16} />
@@ -177,9 +186,10 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* SECTION 2: EVENT MANAGEMENT */}
+        {/* COLUMN 2 & 3: EVENTS & SUBMISSIONS */}
         <div className="lg:col-span-2 space-y-8">
-          {/* ... [Your existing Event Management Code] ... */}
+          
+          {/* EVENTS MANAGEMENT */}
           <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
             <div className="flex items-center gap-3 mb-6">
               <Calendar className="text-vibe-red" />
@@ -187,26 +197,25 @@ function AdminDashboard() {
             </div>
             
             <form action={async (formData) => {
-              const title = formData.get('title') as string;
-              const date = formData.get('date') as string;
-              const link = formData.get('link') as string;
-              await createEvent({
-                title, date, link,
-                description: ''
+              const res = await createEvent({
+                title: formData.get('title') as string,
+                date: formData.get('date') as string,
+                link: formData.get('link') as string,
+                description: 'Vibe Culture Event'
               });
-              loadData();
+              if (res.success) loadData();
             }} className="grid md:grid-cols-3 gap-3 mb-8">
               <input name="title" placeholder="Event Name" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
               <input name="date" type="date" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
-              <input name="link" type="url" placeholder="RSVP Link" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
+              <input name="link" type="url" placeholder="RSVP/Ticket Link" className="bg-white/5 border border-white/10 p-3 rounded-xl text-sm" required />
               <button type="submit" className="md:col-span-3 bg-vibe-red hover:bg-white hover:text-black p-3 rounded-full font-black uppercase text-[10px] transition-all">
-                Add Event to Live Site
+                Add New Event
               </button>
             </form>
 
-            <div className="grid md:grid-cols-2 gap-4 h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="grid md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {events.map((ev) => (
-                <div key={ev.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 group">
+                <div key={ev.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                   <div>
                     <p className="font-bold text-sm">{ev.title}</p>
                     <p className="text-[10px] text-white/40 uppercase tracking-tighter">{ev.date}</p>
@@ -215,7 +224,10 @@ function AdminDashboard() {
                     <a href={ev.link} target="_blank" className="p-2 text-white/20 hover:text-vibe-purple transition-all">
                       <LinkIcon size={16} />
                     </a>
-                    <button onClick={() => { if(confirm("Delete event?")) deleteItem('events', ev.id).then(loadData) }} className="p-2 text-white/20 hover:text-vibe-red transition-all">
+                    <button 
+                      onClick={() => { if(confirm("Delete event?")) deleteItem('events', ev.id).then(loadData) }}
+                      className="p-2 text-white/20 hover:text-vibe-red transition-all"
+                    >
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -224,30 +236,47 @@ function AdminDashboard() {
             </div>
           </div>
 
-          {/* SECTION 3: RECENT SUBMISSIONS */}
-          {/* ... [Your existing Submissions Code] ... */}
+          {/* SUBMISSIONS MANAGEMENT */}
           <div className="glass-card p-6 rounded-3xl border border-white/10 bg-black/40">
             <div className="flex items-center gap-3 mb-6">
               <Users className="text-vibe-purple" />
-              <h2 className="text-xl font-black uppercase tracking-widest italic">New Submissions</h2>
+              <h2 className="text-xl font-black uppercase tracking-widest italic">Talent Submissions</h2>
             </div>
-            <div className="space-y-3">
-              {submissions.map((sub) => (
-                <div key={sub.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                  <div>
-                    <p className="font-bold text-vibe-pink text-sm">{sub.name}</p>
-                    <p className="text-[10px] text-white/40 italic">{sub.talent}</p>
+            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              {submissions.length === 0 ? (
+                <p className="text-center text-white/20 py-10 italic">No submissions yet.</p>
+              ) : (
+                submissions.map((sub) => (
+                  <div key={sub.id} className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <div>
+                      <p className="font-bold text-vibe-pink text-sm">{sub.name}</p>
+                      <p className="text-[10px] text-white/40 italic">{sub.talent}</p>
+                      <p className="text-[8px] text-white/20 uppercase mt-1">
+                        Submitted: {new Date(sub.submittedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <a 
+                        href={sub.portfolioLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[10px] uppercase font-black text-vibe-purple underline hover:text-white transition-all"
+                      >
+                        View Portfolio
+                      </a>
+                      <button 
+                        onClick={() => { if(confirm("Delete submission?")) deleteItem('submissions', sub.id).then(loadData) }}
+                        className="text-white/10 hover:text-vibe-red transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <a href={sub.portfolioLink} target="_blank" className="text-[10px] uppercase font-black text-vibe-purple underline">Portfolio</a>
-                    <button onClick={() => { if(confirm("Delete?")) deleteItem('submissions', sub.id).then(loadData) }} className="text-white/10 hover:text-vibe-red">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
+
         </div>
       </div>
     </div>

@@ -10,13 +10,15 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: "the-vibe-culture"
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: "the-vibe-culture.firebasestorage.app"
+    value: "the-vibe-culture.appspot.com"
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
     value: "663026135123"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:663026135123:web:d02e44bd6855001a0bd6a6"
   - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
     value: "G-TJMNTCJNQM"
+  - variable: NEXT_PUBLIC_BASE_URL
+    value: "https://the-vibe-culture.web.app"
 
   # --- App Configuration ---
   - variable: AUTH_TRUST_HOST
