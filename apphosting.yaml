@@ -18,7 +18,7 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
     value: "G-TJMNTCJNQM"
   - variable: NEXT_PUBLIC_BASE_URL
-    value: "https://vibe--the-vibe-culture.us-central1.hosted.app/"
+    value: "https://thevibeculture.uk/"
 
   # --- App Configuration ---
   - variable: AUTH_TRUST_HOST
