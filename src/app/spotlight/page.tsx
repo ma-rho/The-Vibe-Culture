@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+//export const dynamic = 'force-dynamic';
 import { getFeatured } from '@/app/actions/admin';
 import MemberCard from '@/components/MemberCard';
 import { ExternalLink } from 'lucide-react';

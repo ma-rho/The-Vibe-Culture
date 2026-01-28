@@ -16,8 +16,8 @@ const getServiceAccount = () => {
 
 const serviceAccount = getServiceAccount();
 
-if (!admin.apps.length) {
-  if (serviceAccount) {
+// if (!admin.apps.length) {
+//   if (serviceAccount) {
     try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
@@ -28,11 +28,11 @@ if (!admin.apps.length) {
     } catch (error) {
       console.error('Firebase Admin Initialization Error:', error);
     }
-  } else {
-    // This will show during the "Collecting page data" build phase
-    console.warn('Firebase Admin: Skipping initialization - Service Account Key missing.');
-  }
-}
+//   } else {
+//     // This will show during the "Collecting page data" build phase
+//     console.warn('Firebase Admin: Skipping initialization - Service Account Key missing.');
+//   }
+// }
 
 // Export services with a null check to prevent build-time crashes
 export const firebaseAdminDb = admin.apps.length ? admin.firestore() : null!;
