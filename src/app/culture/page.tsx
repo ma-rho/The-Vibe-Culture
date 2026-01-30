@@ -27,6 +27,27 @@ export default function CulturePage() {
           </div>
         </div>
 
+        {/* ALL WELCOMED SECTION */}
+        <div className="glass-card rounded-3xl p-10 md:p-16 mb-12">
+          <h2 className="text-4xl font-black mb-8 text-white border-l-4 border-vibe-pink pl-6">ALL WELCOMED</h2>
+          <p className="text-lg text-white/70 mb-10 leading-relaxed">
+            Our community thrives on a diverse range of talents. We welcome all creators who are passionate about pushing creative boundaries, including:
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 text-center">
+            {[
+              'Sound Engineers', 'Producers', 'Photographers', 'Singers', 'Clothing Brands', 
+              'MCs', 'Videographers', 'Directors', 'Models', 
+            ].map((talent) => (
+              <div key={talent} className="bg-white/5 p-4 rounded-xl border border-white/10 flex items-center justify-center">
+                <p className="font-bold text-sm uppercase tracking-wider">{talent}</p>
+              </div>
+            ))}
+            <div className="bg-vibe-pink/10 p-4 rounded-xl border border-vibe-pink/30 flex items-center justify-center">
+                <p className="font-bold text-sm uppercase tracking-wider text-vibe-pink">...and more</p>
+            </div>
+          </div>
+        </div>
+
         <div className="glass-card rounded-3xl p-10 border-vibe-red/20">
           <h2 className="text-3xl font-black mb-6 text-vibe-red uppercase">Community Guidelines</h2>
           <ul className="space-y-4">
