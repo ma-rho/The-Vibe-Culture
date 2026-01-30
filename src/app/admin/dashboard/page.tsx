@@ -14,6 +14,8 @@ import {
 import withAdminAuth from '@/components/withAdminAuth';
 import { Trash2, Plus, Users, Star, Calendar, Upload, X, Loader2, Link as LinkIcon } from 'lucide-react';
 import Image from 'next/image';
+// Import the image compression library
+import imageCompression from 'browser-image-compression';
 
 function AdminDashboard() {
   const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
@@ -98,15 +100,44 @@ function AdminDashboard() {
               <h2 className="text-xl font-black uppercase tracking-widest italic">Spotlight Editor</h2>
             </div>
 
+            {/* COMPRESSION LOGIC ADDED TO THE FORM ACTION */}
             <form action={async (formData) => {
               setUploading(true);
               try {
-                await uploadFeaturedCreative(formData);
+                // Get the original image file from the form data
+                const imageFile = formData.get('image') as File;
+                if (!imageFile || imageFile.size === 0) {
+                  throw new Error('Please select an image to upload.');
+                }
+
+                // Set compression options
+                const options = {
+                  maxSizeMB: 2, // This will compress the image to be under 2MB
+                  maxWidthOrHeight: 1920, // This will resize the image to a max width/height of 1920px
+                  useWebWorker: true,
+                };
+
+                // Compress the image
+                const compressedFile = await imageCompression(imageFile, options);
+
+                // Create a new FormData object to hold the compressed image and other data
+                const newFormData = new FormData();
+                newFormData.append('name', formData.get('name')!);
+                newFormData.append('role', formData.get('role')!);
+                newFormData.append('caption', formData.get('caption')!);
+                newFormData.append('creativeLink', formData.get('creativeLink')!);
+                // Append the compressed file, keeping the original file name
+                newFormData.append('image', compressedFile, imageFile.name);
+
+                // Call the server action with the new form data
+                await uploadFeaturedCreative(newFormData);
+                
                 clearPreview();
                 await loadData(); // Refresh list after upload
                 alert("Creative Published!");
               } catch (err) {
-                alert("Upload failed: " + err);
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                alert("Upload failed: " + errorMessage);
               } finally {
                 setUploading(false);
               }
