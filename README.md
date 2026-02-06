@@ -101,3 +101,7 @@ To access the admin dashboard, navigate to `/admin/login` and sign in with the e
 The easiest way to deploy this Next.js app is to use the [Vercel Platform](https://vercel.com/new).
 
 When deploying to Vercel, make sure to set the same environment variables that are in your `.env.local` file in the Vercel project settings.
+
+
+https://github.com/user-attachments/assets/d5d7ba99-58c4-4115-a594-ade86f470fc0
+
